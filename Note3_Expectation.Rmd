@@ -1,0 +1,60 @@
+---
+title: "R Note 3"
+output: pdf_document
+fontsize: 12pt
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Monte-carlo simulation to get a mean
+* Many times it is very difficult to get a mean and variance analytically. In this case, we can use Monte carlo approach to calculate mean and variance. 
+
+* Suppose we want to get mean and variance of $$x^3$$ where x follows normal(0,1). Following code run simulations to get this.
+
+
+```{r e1, echo = TRUE}
+
+nsim<-10000
+x<-rnorm(nsim)
+x3<-x^3
+mean(x3)
+sd(x3)
+
+```
+
+### COVID simulation 
+
+* Consider the COVID simulation used in the previous note. Researchers want to mean and variance of new cases after 50 days (without social distancing, etc). 
+
+* Analytically getting this is very difficult. But we can use Monte-carlo approach to get this easily
+
+
+```{r e2, echo = TRUE}
+
+Get_Trajectory<-function(){
+  n_current_case<-10
+  n_case_trajectory<-rep(0,11)
+  n_case_trajectory[1]<-10
+  for(i in 1:10){
+    n_contact<-rpois(n_current_case,10)  
+    n_new_case<-rbinom(n_current_case,n_contact, 0.2)
+    n_current_case<-sum(n_new_case)
+    n_case_trajectory[i+1]<-n_current_case
+  }
+  return(n_case_trajectory)
+}
+
+nsim<-100
+out.all<-NULL
+for(i in 1:nsim){
+  out.all<-rbind(out.all, Get_Trajectory())
+}
+
+boxplot(out.all)
+
+# Mean and se at 50 days
+mean(out.all[,11])
+sd(out.all[,11])
+```

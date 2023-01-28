@@ -1,0 +1,98 @@
+---
+title: "R Note 2"
+output: pdf_document
+fontsize: 12pt
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+### Discrete random numbers
+Following code generates 10 binomial random variables with different n and p
+```{r e1, echo = TRUE}
+nRandom<-10
+n<-11:20
+p<-seq(from=0.2, to=0.8, length.out=nRandom )
+
+rbinom(nRandom, n,  p)
+```
+Following code generates 1000 poisson random variables with lambda=2
+```{r e2, echo = TRUE}
+nRandom<-1000
+lambda<-2
+
+out<-rpois(nRandom, lambda=lambda)
+mean(out)
+var(out)
+hist(out)
+
+```
+Following code gets PMF and CDF
+
+```{r e21, echo = TRUE}
+dpois(3, lambda=2 )
+ppois(3, lambda=2 )
+
+```
+
+### Continuous random variables
+Following code generate 10000 (standard) Normal random variables with (mean=0, sd=1) and generate chi-square random variable 
+
+```{r e3, echo = TRUE}
+nRandom<-10000
+Z<-rnorm(nRandom, mean=0, sd=1)
+chi1<-Z^2
+
+# compare them with random numbers from chi
+chi2<-rchisq(nRandom, df=1)
+
+# Use QQ plot to compare
+qqplot(chi1, chi2)
+abline(0,1)
+
+# How about scatter plot?
+plot(chi1,chi2, main="scatter plot")
+
+```
+
+
+### Simulation studies to predict number of new COVID infection
+Researchers are interested in predicting the number of cases of COVID and the effect of the intervention measures and policies. To do this, we consider a following simulation scheme 
+
+*	5 days as one-time unit. So 20 time units for 100 days 
+* Initially there are 10 cases
+* Each case has x close contacts in one-time unit, where x follows a Poisson distribution with lambda=10
+* For each close contact, there is p=0.2 probability of the infection
+* For simplicity, we consider that newly infected individual can only infect individuals in the next time unit (so only one time unit). It is similar after one-time unit, infected individuals are either detected/cured/died. 
+* Do not consider a situation that infected individual has a close contact with already infected individual.
+
+The following code run for 10 time units (50 days) to get trajectory of new cases.
+```{r e4, echo = TRUE}
+n_current_case<-10
+n_case_trajectory<-rep(0,11)
+n_case_trajectory[1]<-10
+for(i in 1:10){
+  n_contact<-rpois(n_current_case,10)  
+  n_new_case<-rbinom(n_current_case,n_contact, 0.2)
+  n_current_case<-sum(n_new_case)
+  n_case_trajectory[i+1]<-n_current_case
+}
+
+plot(n_case_trajectory, type="l")
+```
+
+At day 50, people realize the severity of the problem and start to wash hand and wear a mask, which change p=0.14. Also government impose social distancing which changes lambda=3. Get the trajectory for the next 50 days
+
+```{r e5, echo = TRUE}
+n_case_trajectory_new<-rep(0,11)
+n_case_trajectory_new[1]<-n_current_case
+for(i in 1:10){
+  n_contact<-rpois(n_current_case,3)  
+  n_new_case<-rbinom(n_current_case,n_contact, 0.14)
+  n_current_case<-sum(n_new_case)
+  n_case_trajectory_new[i+1]<-n_current_case
+}
+
+plot(n_case_trajectory_new, type="l")
+```

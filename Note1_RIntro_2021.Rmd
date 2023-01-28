@@ -1,0 +1,180 @@
+---
+title: "RIntro"
+output: pdf_document
+fontsize: 12pt
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Why R
+Which tools are used at work in Data Science?
+
+![From Kaggle 2019 survey](Kaggle_Programming_2019.png){width=500px}
+
+
+## Where to get R
+
+* RStudio provide a good development environment: https://rstudio.com/
+
+\pagebreak
+
+## Properties of R
+
+* Specialized in statistical data analysis
+* Many functions and packages
+    * Extensive functions and packages for statistical analysis (lm, glm, etc), machine learning (xgboost, keras, etc) 
+    * Recently developed packages for large data analysis and manipulation
+
+* Can be linked to C/C++ and other languages 
+    * Computation intensive jobs can be written C/C++ and then linked 
+
+
+* limitations 
+    * Not a general purpose programming language, so there are limitations…
+
+
+## R vs Python
+
+![https://data-flair.training/](R-vs-Python-for-data-science1.jpg){width=500px}
+
+
+
+## R code examples
+### Vector & Matrix
+Vectors are a fundamental concept in R. Generate a vector of (1,2,3,4,5)
+```{r vector1, echo = TRUE}
+c(1,2,3,4,5)
+```
+Other ways to generate a vector.
+```{r vector2, echo = TRUE}
+rep(1,10)
+1:10
+```
+rep is a function to return a vector (here 1 for 10 repeat). To get a manual of rep, use ?. You can assign a vector to object using <-. For comment, use #
+```{r vector4, echo = TRUE}
+# comment in the code
+x<-1:5
+y<-c(5,6,7,8,9)
+
+x
+y
+x[2]
+x[2:3]
+x[-3]
+x[x<4]
+x[1:2]<-c(8, 20)
+
+
+x+y
+x*y
+2*x + y
+
+y^2
+exp(y)
+
+
+```
+You can generate a matrix using a matrix function
+```{r mat1, echo = TRUE}
+X<-matrix(c(1,2,3,4), ncol=2, byrow=TRUE)
+X
+```
+Vector matrix multiplication
+```{r mat2, echo = TRUE}
+X<-matrix(c(1,2,3,4), ncol=2, byrow=TRUE)
+y<-c(1,2)
+X %*% y
+```
+### Random number functions and summary functions
+R has many functions to generate random numbers from distribution. The following code generate 10 random numbers from normal distribution, and get mean and variance of a.
+```{r ran, echo = TRUE}
+a<-rnorm(10)
+a
+length(a)
+mean(a)
+var(a)
+sum(a)
+summary(a)
+```
+### Plot
+Plotting functions
+```{r plot, echo = TRUE}
+x<-rnorm(100)
+y<- x* 0.5 + rnorm(100)
+
+hist(x)
+plot(x, y)
+abline(lm(y ~ x), col = "blue")
+```
+### Loop and if statement
+A loof is done as follow
+```{r loop1, echo = TRUE}
+for(i in 1:10){
+  
+  print(i)
+}
+
+```
+You can use if statement
+```{r loop2, echo = TRUE}
+for(i in 1:10){
+  if(i > 6){
+    print(i)
+  }
+}
+
+```
+
+## Data read
+To read data, you can use read.table or read.csv function. You can also read data in URL. For example, read JHU data of COVID19 and plot them 
+```{r dataread, echo = TRUE}
+
+covid_url <-paste("https://raw.githubusercontent.com",
+"/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/",
+"time_series_covid19_confirmed_global.csv", sep="")
+
+confirmed_COVID <- read.csv(covid_url)
+SKorea<-confirmed_COVID[confirmed_COVID$Country.Region=="Korea, South",]
+SKorea[1:10]
+Italy<-confirmed_COVID[confirmed_COVID$Country.Region=="Italy",]
+
+nSouthKorea<-as.numeric(SKorea[-(1:4)])
+nItaly<-as.numeric(Italy[-(1:4)])
+
+plot(nItaly, type="l", col="red", main="COVID", xlab="Day", ylab="Number of Cases")
+points(nSouthKorea, type="l", col="blue")
+
+# Legend
+legend("topleft", legend=c("Italy", "S.Korea"), col=c("red", "blue"), lty="solid" )
+
+```
+
+There are packages for data handling, such as dply. You can  see the following website for the same data: https://rviews.rstudio.com/2020/03/05/covid-19-epidemiology-with-r/
+
+To save data, you can use write functions (write.table, write.csv, etc) or save functions.
+
+### User defined function
+You can define your own function. For example, the following is a function to return daily confirmed cases from cumulative case numbers
+
+```{r function, echo = TRUE}
+Get_nCaseDay<-function(nCase){
+  n<-length(nCase)-1 # does not consider last day
+  nCaseDay<-rep(0,n)
+  nCaseDay[1]<-nCase[1]
+  for(i in 2:n){
+    nCaseDay[i]<-nCase[i] - nCase[i-1]
+  }
+  return(nCaseDay)
+}
+
+nSouthKoreaDay<-Get_nCaseDay(nSouthKorea)
+
+plot(nSouthKoreaDay, type="l", col="red"
+     , main="S.Korea Daily COVID", xlab="Date", ylab="Number of Cases")
+
+```
+
+### ETC
+There are lots of packages for data manupulation and analysis. Please look at online materials (there are several youtube lectures), manuals and vignettes. 
