@@ -1,0 +1,86 @@
+---
+title: "Note10"
+output: pdf_document
+fontsize: 12pt
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Coris data analysis
+
+We carry out linear and logistic regressions using the coris data.
+
+```{r coris}
+df = read.table("./DATA/coris.txt", sep=",", header=TRUE)
+head(df)
+```
+\vspace{1cm}
+
+
+### Linear regression
+In this analysis, we use ldl  as an outcome variable and age, tobacco, alcohol, adiposity, and obesity as predictors.
+
+* Do predictors explain the ldl level?
+* How much the ldl level would increase if the level of adiposity increases one unit?
+* Which predictor is most significantly associated with ldl? 
+* Is obesity significantly associated with ldl?
+
+\vspace{5cm}
+
+```{r coris3}
+lm.out<-lm(ldl ~ age + tobacco + alcohol + adiposity + obesity, data=df )
+summary(lm.out)
+
+
+```
+
+\vspace{3cm}
+
+If adiposity is removed, how the result looks like?
+
+```{r coris4}
+lm.out<-lm(ldl ~ age + tobacco + alcohol  + obesity, data=df )
+summary(lm.out)
+
+```
+
+###  Residual plots
+To check whether linear regression assumptions are satisfied, draw residual plots
+\vspace{3cm}
+```{r coris5}
+
+par(mfrow=c(2,2))
+plot(lm.out)
+
+```
+
+### Logistic regression
+Now we consider chd as the outcome and  age,  sbp, tobacco, ldl, adiposity, famhist, obesity and alcohol as predictor. Fit the logistic regression model.
+
+\vspace{5cm}
+```{r coris6}
+glm.out <- glm(chd ~ age +  sbp+tobacco+ldl+adiposity+famhist+obesity+alcohol,  family=binomial, data=df)
+summary(glm.out)
+```
+
+### Predicted logit and prob. 
+Obtain predicted values as logit and prob scales. 
+\vspace{3cm}
+```{r coris7}
+logit.predict<-predict(glm.out)
+prob.predict<-exp(logit.predict)/(1+exp(logit.predict))
+
+col<-c("blue", "red")
+par(mfrow=c(1,3))
+
+boxplot(logit.predict ~ df$chd, xlab="CHD" )
+boxplot(prob.predict ~ df$chd, xlab="CHD" )
+
+#plot(logit.predict, df$chd,  col=col[df$chd+1], pch="*", ylab="CHD")
+#boxplot(pred_prob ~ df$chd, xlab="CHD", ylab="Prob")
+plot(logit.predict, prob.predict, ylim=c(-0.1, 1.1) , col=col[df$chd+1] )
+
+
+```

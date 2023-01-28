@@ -1,0 +1,57 @@
+---
+title: "R Note 4"
+output: pdf_document
+fontsize: 12pt
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Law of large number
+* The following code shows the convergence of mean of x, when x follows N(5, 1)
+
+
+```{r e1, echo = TRUE}
+
+mu = 5
+nsim<-100
+N.all<-c(10, 100, 1000, 10000)
+OUT.all<-matrix(0, nsim, 4)
+
+for(i in 1:nsim){
+	for(j in 1:4){
+		OUT.all[i,j]<-mean(rnorm(N.all[j], mean=mu))
+	}
+}
+
+par(mfrow=c(2,2))
+for(j in 1:4)
+	hist(OUT.all[,j], xlim=c(3.8,6.2), main=paste("N=", N.all[j]))
+
+
+```
+## Central limit theorem
+* The following code to show asymptotic distribution of mean of x, when x follows Bernoulli(0.1)
+
+```{r e2, echo = TRUE}
+
+n.all<-c(1, 10, 100, 10000)
+x<-matrix(rbinom(10000*1000,1,0.1), nrow=1000)
+
+par(mfrow=c(2,2))
+for(i in 1:4){
+	
+	
+	n<-n.all[i]
+	x_bar<-rowMeans(cbind(x[, 1:n]))
+	z = (x_bar - 0.1)*sqrt(n)/sqrt(0.1*0.9)
+	hist(z, main=paste("n =", n), xlab="z", ylab="frequency")
+
+}
+par(mfrow=c(1,1))
+
+```
+
+
+

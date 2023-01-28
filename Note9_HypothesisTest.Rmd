@@ -1,0 +1,134 @@
+---
+title: "Note9"
+output: pdf_document
+fontsize: 12pt
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Simulation data
+
+We carry out simulation studies to investigate the behaviors of p-values. Consider a two group test, where each group has n=100 samples. Each sample in the first group follows N(0,1) and each sample in the second group follows N($\mu$, 1). The following code simulate one dataset with $\mu=0.5$
+
+```{r pval}
+set.seed(100)
+WaldTest<-function(x1, x2){
+  
+  n1 = length(x1)
+  n2 = length(x2)
+  Mu1 = mean(x1)
+  Mu2 = mean(x2)
+  Var1 = mean((x1-Mu1)^2)
+  Var2 = mean((x2-Mu2)^2)
+
+  Theta = Mu2 - Mu1
+  SE = sqrt(Var1/ n1 + Var2/n2)
+  W = Theta/SE
+  Pvalue = pchisq(W^2, df=1, lower.tail=FALSE)
+
+  return(Pvalue)
+
+}
+
+mu<-0.5
+n<-100
+x1<-rnorm(n)
+x2<-rnorm(n, mean = mu)
+
+WaldTest(x1, x2)
+
+```
+### P-values under the null hypothesis
+
+Now we generate 1000 datasets with $\mu=0$ and check the distribution of p-values. How does it look like?
+
+```{r pval1}
+mu<-0
+nSIM<-1000
+pval.all<-rep(0,nSIM)
+for(i in 1:nSIM){
+
+  x1<-rnorm(n)
+  x2<-rnorm(n, mean = mu)
+
+  pval.all[i]<-WaldTest(x1, x2)
+  
+}
+
+hist(pval.all)
+```
+### Type I error rates
+
+If we use $\alpha=0.05$ as a cutoff, how many p-valus are significant?
+
+How about changing it to $\alpha=0.05/10, 0.05/1000$?
+
+
+```{r pval2}
+sum(pval.all < 0.05)
+sum(pval.all < 0.05/10)
+sum(pval.all < 0.05/1000)
+```
+### Power 
+
+Researchers decide to use $\alpha=0.05/1000$, the bonferroni corrected alpha of testing 1000 hypothesis, as the cutoff. Now researchers want to check how the power changes by $\mu$. Carry out simulation studies with $\mu=0,0.1,...,1$
+
+```{r power1}
+mu.candidate<-0:10/10
+nSIM<-1000
+cutoff<-0.05/1000
+Power.a<-rep(0,11)
+for(j in 1:11){
+  pval.all<-rep(0,nSIM)
+  mu<-mu.candidate[j]
+  
+  for(i in 1:nSIM){
+
+    x1<-rnorm(n)
+    x2<-rnorm(n, mean = mu)
+
+    pval.all[i]<-WaldTest(x1, x2)
+  }
+  Power.a[j]<-mean(pval.all < cutoff)
+  
+}
+
+plot(mu.candidate, Power.a, type="b")
+```
+
+
+### Permutation test
+
+Using the same simulation approach with $\mu=0.4$ carry out a permutation test with B=10000
+
+```{r coris2}
+set.seed(100)
+mu<-0.4
+n<-100
+x1<-rnorm(n)
+x2<-rnorm(n, mean = mu)
+x<-c(x1,x2)
+
+T.org<-mean(x1)-mean(x2)
+
+# Permutation test
+B<-10000
+T.permu<-rep(0,B)
+for(i in 1:B){
+  idx_1<-sample.int(2*n, n)
+  mu1<-mean(x[idx_1])
+  mu2<-mean(x[-idx_1])
+  T.permu[i]<-mu1-mu2
+}
+
+pval<-(sum(T.permu^2 >= T.org^2) +1)/(B+1)
+pval
+
+WaldTest(x1, x2)
+
+
+
+
+```

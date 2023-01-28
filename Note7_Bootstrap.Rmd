@@ -1,0 +1,133 @@
+---
+title: "Note7"
+output: pdf_document
+fontsize: 12pt
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Coris data analysis 
+We use the same Coris data used in the previous chapter. Now we consider to get the distribution of median LDL for CHD=1
+
+```{r coris}
+df = read.table("./DATA/coris.txt", sep=",", header=TRUE)
+LDL_1 = df$ldl[df$chd==1]
+T_Median = median(LDL_1)
+
+B<-1000
+B_Median<-rep(0,B)
+for(i in 1:B){
+  B_sample<-sample(LDL_1, replace=TRUE)
+  B_Median[i]<-median(B_sample)
+}
+
+hist(B_Median)
+
+```
+
+Now we get various Bootstrap confidence intervals
+
+```{r coris1}
+
+Get_CI<-function(T, B_Sample){
+  
+  # Percentile Interval
+  CI_Percent = quantile(B_Sample, probs=c(0.025, 0.975))
+
+  # Normal Interval
+  se_b = sd(B_Sample)
+  CI_Normal = c(T - 1.96* se_b, T + 1.96*se_b)
+
+  # Pivot Interval
+  CI_Pivot = c(2*T - CI_Percent[2], 2*T - CI_Percent[1])
+
+  
+  names(CI_Percent)<-c("2.5%", "97.5%")
+  names(CI_Normal)<-c("2.5%", "97.5%")
+  names(CI_Pivot)<-c("2.5%", "97.5%")
+
+    re<-list(CI_Percent=CI_Percent, CI_Normal=CI_Normal, CI_Pivot=CI_Pivot)
+  return(re)
+  
+}
+
+
+Get_CI(T_Median, B_Median)
+```
+
+## LDL difference between CHD groups
+Now we are interested in checking whether LDL levels are different by CHD groups. Here we use Bootstrap to get the confidence interval. 
+
+```{r coris2}
+
+n<-nrow(df)
+T_MeanDiff = mean(df$ldl[df$chd==1]) - mean(df$ldl[df$chd==0])
+T_MeanDiff
+
+B<-1000
+B_MeanDiff<-rep(0,B)
+for(i in 1:B){
+  B_sample_idx<-sample(1:n, replace=TRUE)
+  df1<-df[B_sample_idx,]
+  mean1<-mean(df1$ldl[df1$chd==1])
+  mean0<-mean(df1$ldl[df1$chd==0])
+  
+  B_MeanDiff[i]<-mean1 - mean0
+}
+
+hist(B_MeanDiff)
+# Confidence Interval
+Get_CI(T_MeanDiff, B_MeanDiff)
+
+```
+
+## Correlation between LDL and sbp
+Now researchers are interested in the correlation between LDL and sbp 
+
+```{r coris3}
+
+plot(df$ldl, df$sbp)
+T_Corr<-cor(df$ldl, df$sbp)
+T_Corr
+
+n<-nrow(df)
+B<-1000
+B_Corr<-rep(0,B)
+for(i in 1:B){
+  B_sample_idx<-sample(1:n, replace=TRUE)
+  df1<-df[B_sample_idx,]
+  B_Corr[i]<-cor(df1$ldl, df1$sbp)
+  
+}
+
+hist(B_Corr)
+# Percentile Interval
+Get_CI(T_Corr, B_Corr)
+
+
+```
+
+
+## Use boot package
+Boot package can be used instead. Following code uses boot package to get a CI of the correlation between LDL and sbp 
+
+```{r coris4}
+
+library(boot)
+CorrFunc <- function(d, indice, formula, resid, fit){   
+	df1 = d[indice,]
+	B_Corr<-cor(df1$ldl, df1$sbp)
+	return(B_Corr)
+}
+
+boot.sample<-boot(df, CorrFunc, R=1000)
+boot.sample
+
+boot.ci(boot.sample)
+
+
+```
+
+
