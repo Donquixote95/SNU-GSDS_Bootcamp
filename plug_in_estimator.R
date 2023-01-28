@@ -57,3 +57,84 @@ T_se
 
 # 95% CI
 c(T-1.96*T_se, T+1.96*T_se)
+
+# Bootstrap
+LDL_1 = df$ldl[df$chd==1]
+T_Median = median(LDL_1)
+B<- 1000
+B_Median<-rep(0,B)
+for(i in 1:B){
+  B_sample<-sample(LDL_1, replace=TRUE)
+  B_Median[i]<-median(B_sample)
+}
+hist(B_Median)
+
+# Now we get various Bootstrap confidence intervals
+Get_CI <- function(T, B_sample){
+  # Percentile Intervals
+  CI_Percent = quantile(B_sample, probs=c(0.025, 0.975))
+  # Normal Intervals
+  se_b = sd(B_sample)
+  CI_Normal = c(T-1.96*se_b, T+1.96*se_b)
+  # Pivot Intervals
+  CI_Pivot = c(2*T - CI_Percent[2], 2*T - CI_Percent[1])
+  
+  names(CI_Percent) <- c("2.5%", "97.5%")
+  names(CI_Normal) <- c("2.5%", "97.5%")
+  names(CI_Pivot) <- c("2.5%", "97.5%")
+  
+  re<-list(CT_Percent=CI_Percent, CI_Normal=CI_Normal, CI_Pivot=CI_Pivot)
+  return(re)
+}
+Get_CI(T_Median, B_Median) 
+
+# Difference가 estimator라면 
+# Now we are interested in checking whether LDL levels are different by CHD groups.
+
+n<-nrow(df)
+T_MeanDiff = mean(df$ldl[df$chd==1])-mean(df$ldl[df$chd==0])
+# mean(df$ldl[df$chd==1]) ; mu1
+# mean(df$ldl[df$chd==0]) ; mu0
+T_MeanDiff
+
+B<-1000
+B_MeanDiff<-rep(0,B)
+for(i in 1:B){
+  B_sample_idx<-sample(1:n, replace=TRUE)
+  df1<-df[B_sample_idx,]
+  mean1<-mean(df1$ldl[df1$chd==1])
+  mean0<-mean(df1$ldl[df1$chd==0])
+  
+  B_MeanDiff[i] <-mean1-mean0
+}
+hist(B_MeanDiff)
+Get_CI(T_MeanDiff, B_MeanDiff)
+
+plot(df$ldl, df$sbp)
+T_Corr<-cor(df$ldl, df$sbp)
+T_Corr
+
+n<-nrow(df)
+B<-1000
+B_Corr<-rep(0,B)
+for(i in 1:B){
+  B_sample_idx<-sample(1:n, replace=TRUE)
+  df1<-df[B_sample_idx,]
+  B_Corr[i]<-cor(df1$ldl, df1$sbp)
+}
+hist(B_Corr)
+
+Get_CI(T_Corr, B_Corr)
+
+install.packages("boot")
+library(boot)
+CorrFunc <- function(d, indice, formula, resid, fit){
+  df1 = d[indice,]
+  B_Corr<-cor(df1$ldl, df1$sbp)
+  return(B_Corr)
+}
+boot.sample<-boot(df, CorrFunc, R=1000)
+boot.sample
+# d가 sample size?, indice가 bootstrap의 index
+
+boot.ci(boot.sample)
