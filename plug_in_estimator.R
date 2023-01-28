@@ -1,0 +1,59 @@
+# getwd() ; R에서 디렉토리 확인
+
+df = read.table("./DATA/coris.txt", sep=",", header = TRUE)
+df[1:2,]
+
+# Change chd as a factor
+df$chd = factor(df$chd)
+table(df$chd)
+
+par(mfrow=c(1,2))
+hist(df$ldl, main = "Histogram of LDL")
+boxplot(df$ldl ~ df$chd, main = "LDL by CHD")
+
+par(mfrow=c(1,1))
+
+# Get a little bit fancier plots using ggplot
+install.packages("ggplot2")
+install.packages("gridExtra")
+install.packages("dplyr")
+library(ggplot2)
+library(gridExtra)
+library(dplyr)
+
+# Violin plot
+p1 <- ggplot(df, aes(x=ldl, color=chd)) + geom_histogram(fill="white")
+p2 <- ggplot(df, aes(x=chd, y=ldl, color=chd)) + geom_violin() + geom_boxplot(width=0.1)
+
+grid.arrange(p1, p2, nrow = 1)
+
+eCDF_0 <- ecdf(df$ldl[df$chd==0])
+eCDF_1 <- ecdf(df$ldl[df$chd==1])
+
+x_range <- seq(min(df$ldl), max(df$ldl), length.out=1000)
+plot(x_range, eCDF_0(x_range))
+points(x_range, eCDF_1(x_range), col="red")
+legend("topleft", legend=c("CHD=0", "CHD=1"), col=c("black", "red"), pch=1)
+
+n0<-length(which(df$chd == 0))
+n1<-length(which(df$chd == 1))
+
+mu_0 = mean(df$ldl[df$chd == 0])
+mu_1 = mean(df$ldl[df$chd == 1])
+se_0 = sd(df$ldl[df$chd==0]) / sqrt(n0)
+se_1 = sd(df$ldl[df$chd==1]) / sqrt(n1)
+
+mu_0
+mu_1
+se_0
+se_1
+
+# Plug in estimator
+
+T = mu_1 - mu_0
+T_se = sqrt(se_0^2 + se_1^2)
+T
+T_se
+
+# 95% CI
+c(T-1.96*T_se, T+1.96*T_se)
